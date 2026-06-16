@@ -1,6 +1,8 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import User from "../models/User";
+import Submission from "../models/Submission";
+
 
 export const register = async (
   username: string,
@@ -58,5 +60,33 @@ export const login = async (
   return {
     token,
     user
+  };
+};
+
+
+export const getProfile = async (
+  userId: string
+) => {
+  const user = await User.findById(userId)
+    .select("username email rating");
+
+  if (!user) {
+    throw new Error("User not found");
+  }
+
+  const submissions = await Submission.find({
+    userId,
+  })
+    .populate(
+      "problemId",
+      "title difficulty"
+    )
+    .sort({
+      createdAt: -1,
+    });
+
+  return {
+    user,
+    submissions,
   };
 };

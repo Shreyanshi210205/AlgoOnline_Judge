@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import * as authService from "../services/auth.service";
+import { AuthRequest } from "../middleware/auth.middleware";
 
 export const registerUser = async (
   req: Request,
@@ -44,6 +45,28 @@ export const loginUser = async (
     });
   } catch (error: any) {
     res.status(401).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
+
+export const getProfile = async (
+  req: AuthRequest,
+  res: Response
+) => {
+  try {
+    const profile =
+      await authService.getProfile(
+        req.user!.id
+      );
+
+    res.status(200).json({
+      success: true,
+      data: profile,
+    });
+  } catch (error: any) {
+    res.status(400).json({
       success: false,
       message: error.message,
     });

@@ -49,7 +49,12 @@ export const getProblemById = async (
 ) => {
   try {
     const { id } = req.params;
-
+    if (!id || Array.isArray(id)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid or missing userId parameter",
+      });
+    }
     const problem =
       await problemService.getProblemById(id);
 

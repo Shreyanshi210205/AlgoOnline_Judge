@@ -7,7 +7,7 @@ import {
 
 const router = Router();
 
-router.post("/", createProblem);
+router.post("/create", createProblem);
 router.get("/", getAllProblems);
 router.get("/:id", getProblemById);
 

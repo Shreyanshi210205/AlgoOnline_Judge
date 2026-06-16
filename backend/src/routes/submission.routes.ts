@@ -10,6 +10,6 @@ const router = Router();
 
 router.post("/", createSubmission,authMiddleware);
 router.get("/:id", getSubmissionById);
-router.get("/submissions/:userId", getUserSubmissions);
+router.get("/user/:userId", getUserSubmissions);
 
 export default router;
