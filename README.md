@@ -29,5 +29,5 @@ The platform follows a modular monolithic architecture with an asynchronous judg
 7. Frontend polls for verdict updates
 
 <p align="center">
-  <img src="./assets/architecture.png" width="900"/>
+  <img src="./assets/image.png" width="900"/>
 </p>
