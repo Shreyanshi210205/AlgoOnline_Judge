@@ -1,16 +1,22 @@
 import Submission from "../models/Submission";
+import { addSubmissionJob } from "../jobs/submission.job";
 
 export const createSubmission = async (
   submissionData: any
 ) => {
-  const submission = await Submission.create({
-    ...submissionData,
-    verdict: "Pending",
-  });
+
+  const submission =
+    await Submission.create({
+      ...submissionData,
+      verdict: "Pending"
+    });
+
+  await addSubmissionJob(
+    submission._id.toString()
+  );
 
   return submission;
 };
-
 export const getSubmissionById = async (
   submissionId: string
 ) => {
