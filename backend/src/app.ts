@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes";
 import problemRoutes from "./routes/problem.routes";
 import submissionRoutes from "./routes/submission.routes";
+import { errorMiddleware } from "./middleware/error.middleware";
+import { notFoundMiddleware } from "./middleware/notFound.middleware";
 
 dotenv.config();
 
@@ -27,12 +29,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
 
-// 404 Handler
-app.use("*", (_req, res) => {
-  res.status(404).json({
-    success: false,
-    message: "Route not found",
-  });
-});
+app.use(errorMiddleware)
+app.use(notFoundMiddleware)
+
 
 export default app;

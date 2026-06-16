@@ -27,7 +27,3 @@ The platform follows a modular monolithic architecture with an asynchronous judg
 5. Docker executes the code against hidden test cases
 6. Verdict is stored in MongoDB
 7. Frontend polls for verdict updates
-
-<p align="center">
-  <img src="./assets/image.png" width="900"/>
-</p>
