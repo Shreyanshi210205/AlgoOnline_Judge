@@ -7,42 +7,122 @@ const execAsync = promisify(exec);
 
 export const executeCpp = async (
   code: string,
-  input: string
+  input: string,
+  submissionId: string
 ) => {
-  const tempDir = path.join(process.cwd(), "temp");
+
+  const submissionDir = path.join(
+    process.cwd(),
+    "temp",
+    submissionId
+  );
+
+  await fs.mkdir(submissionDir, {
+    recursive: true,
+  });
 
   const cppFile = path.join(
-    tempDir,
-    "temp.cpp"
+    submissionDir,
+    "main.cpp"
   );
 
   const exeFile = path.join(
-    tempDir,
-    "temp.exe"
+    submissionDir,
+    "main"
   );
 
-  await fs.writeFile(cppFile, code);
+  const inputFile = path.join(
+    submissionDir,
+    "input.txt"
+  );
 
   try {
 
-    await execAsync(
-      `g++ "${cppFile}" -o "${exeFile}"`
+    await fs.writeFile(cppFile, code);
+
+    await fs.writeFile(
+      inputFile,
+      input
     );
 
-    const { stdout } =
+    // Compilation Step
+    try {
+
       await execAsync(
-        `echo ${JSON.stringify(input)} | "${exeFile}"`
+        `docker run --rm -v "${submissionDir}:/app" gcc bash -c "g++ /app/main.cpp -o /app/main"`
       );
 
-    return {
-      success: true,
-      output: stdout.trim(),
-    };
+    } catch (error: any) {
+
+      await fs.rm(submissionDir, {
+        recursive: true,
+        force: true,
+      });
+
+      return {
+        success: false,
+        type: "Compilation Error",
+        error: error.stderr,
+      };
+    }
+
+    // Execution Step
+    try {
+        const start = Date.now();
+      const { stdout } =
+        await execAsync(
+          `docker run --rm --network=none --memory=256m --cpus=1 -v "${submissionDir}:/app" gcc bash -c "/app/main < /app/input.txt"`,
+          {
+            timeout: 2000,
+          }
+        );
+        const end=Date.now();
+      await fs.rm(submissionDir, {
+        recursive: true,
+        force: true,
+      });
+
+      return {
+        success: true,
+        output: stdout.trim(),
+executionTime:
+    end - start
+        };
+
+    } catch (error: any) {
+
+      await fs.rm(submissionDir, {
+        recursive: true,
+        force: true,
+      });
+
+      if (
+        error.killed ||
+        error.signal === "SIGTERM"
+      ) {
+        return {
+          success: false,
+          type: "Time Limit Exceeded",
+        };
+      }
+
+      return {
+        success: false,
+        type: "Runtime Error",
+        error: error.stderr || error.message,
+      };
+    }
 
   } catch (error: any) {
 
+    await fs.rm(submissionDir, {
+      recursive: true,
+      force: true,
+    });
+
     return {
       success: false,
+      type: "Runtime Error",
       error: error.message,
     };
   }

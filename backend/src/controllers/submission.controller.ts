@@ -79,3 +79,27 @@ export const getUserSubmissions = async (
     });
   }
 };
+
+import { runCode } from "../services/run.service";
+
+export const runSubmission =
+  async (req:Request, res:Response) => {
+
+    const {
+      problemId,
+      code,
+      language
+    } = req.body;
+
+    const results =
+      await runCode(
+        problemId,
+        code,
+        language
+      );
+
+    return res.status(200).json({
+      success: true,
+      results,
+    });
+};

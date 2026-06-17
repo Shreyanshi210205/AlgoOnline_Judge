@@ -6,7 +6,8 @@ import problemRoutes from "./routes/problem.routes";
 import submissionRoutes from "./routes/submission.routes";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { notFoundMiddleware } from "./middleware/notFound.middleware";
-import testRoutes from "./routes/test.route";
+import leaderboardRoutes
+from "./routes/leaderboard.route";
 
 dotenv.config();
 
@@ -29,7 +30,7 @@ app.get("/health", (_req, res) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/problems", problemRoutes);
 app.use("/api/submissions", submissionRoutes);
-app.use("/api/test", testRoutes);
+app.use("/api/leaderboard",leaderboardRoutes)
 
 app.use(errorMiddleware)
 app.use(notFoundMiddleware)

@@ -1,7 +1,11 @@
 import Submission from "../models/Submission";
 import Problem from "../models/Problem";
 import { executeCpp } from "../executors/cpp.executor";
+import { executePython } from "../executors/python.executor";
+import { executeJava } from "../executors/java.executor";
+import { executeJavascript } from "../executors/js.executor";
 import mongoose from "mongoose";
+import User from "../models/User";
 
 export const judgeSubmission = async (
   submissionId: string
@@ -39,39 +43,89 @@ console.log(
   ];
 
   try {
-
+      let passedCount = 0;
+let maxExecutionTime = 0;
     for (const testCase of testCases) {
   console.log("4. Running testcase");
       let result;
 
       switch (submission.language) {
 
-        case "cpp":
-          result = await executeCpp(
-            submission.code,
-            testCase.input
-          );
-            console.log("5. Result:", result);
+  case "cpp":
+    result = await executeCpp(
+      submission.code,
+      testCase.input,
+      submission._id.toString()
+    );
+    break;
 
-          break;
+  case "python":
+    result = await executePython(
+      submission.code,
+      testCase.input,
+      submission._id.toString()
+    );
+    break;
 
-        default:
-          throw new Error(
-            "Language not supported"
-          );
-      }
+  case "java":
+    result = await executeJava(
+      submission.code,
+      testCase.input,
+      submission._id.toString()
+    );
+    break;
 
-      
+  case "javascript":
+    result = await executeJavascript(
+      submission.code,
+      testCase.input,
+      submission._id.toString()
+    );
+    break;
+
+  default:
+    throw new Error(
+      "Language not supported"
+    );
+}
+      if (result.executionTime) {
+  maxExecutionTime = Math.max(
+    maxExecutionTime,
+    result.executionTime
+  );
+}
 
       if (!result.success) {
+submission.testCasesPassed =
+    passedCount;
 
-        submission.verdict =
-          "Compilation Error";
+  submission.executionTime =
+    maxExecutionTime;
+  switch(result.type) {
 
-        await submission.save();
+    case "Compilation Error":
+      submission.verdict =
+        "Compilation Error";
+      break;
 
-        return;
-      }
+    case "Runtime Error":
+      submission.verdict =
+        "Runtime Error";
+      break;
+
+    case "Time Limit Exceeded":
+      submission.verdict =
+        "Time Limit Exceeded";
+      break;
+
+    default:
+      submission.verdict =
+        "Runtime Error";
+  }
+
+  await submission.save();
+  return;
+}
 
       const actualOutput =
         (result.output ?? "").trim();
@@ -82,7 +136,11 @@ console.log(
       if (
         actualOutput !== expectedOutput
       ) {
+          submission.testCasesPassed =
+  passedCount;
 
+submission.executionTime =
+  maxExecutionTime;
         submission.verdict =
           "Wrong Answer";
 
@@ -90,12 +148,56 @@ console.log(
 
         return;
       }
+      passedCount++;
     }
 
-    submission.verdict =
-      "Accepted";
+submission.verdict = "Accepted";
 
-    await submission.save();
+submission.testCasesPassed =
+  passedCount;
+
+submission.executionTime =
+  maxExecutionTime;
+
+const user = await User.findById(
+  submission.userId
+);
+
+if (user) {
+
+  const alreadySolved =
+    user.solvedProblems.some(
+      (id) =>
+        id.toString() ===
+        submission.problemId.toString()
+    );
+
+  if (!alreadySolved) {
+
+    switch (problem.difficulty) {
+
+      case "Easy":
+        user.rating += 10;
+        break;
+
+      case "Medium":
+        user.rating += 20;
+        break;
+
+      case "Hard":
+        user.rating += 30;
+        break;
+    }
+
+    user.solvedProblems.push(
+      submission.problemId
+    );
+
+    await user.save();
+  }
+}
+
+await submission.save();
 
   } catch (error) {
 

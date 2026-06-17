@@ -68,7 +68,13 @@ export const getProfile = async (
   userId: string
 ) => {
   const user = await User.findById(userId)
-    .select("username email rating");
+  .select(
+    "username email rating solvedProblems"
+  )
+  .populate(
+    "solvedProblems",
+    "title difficulty"
+  );
 
   if (!user) {
     throw new Error("User not found");
