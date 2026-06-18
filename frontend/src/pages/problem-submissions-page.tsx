@@ -6,33 +6,29 @@ import { Select } from '../components/ui/select';
 import { Skeleton } from '../components/ui/skeleton';
 import { EmptyState } from '../components/ui/empty-state';
 import { StatusPill } from '../components/status-pill';
-import { useAuth } from '../hooks/use-auth';
 import { useProblem } from '../hooks/use-problem';
-import { useProfile } from '../hooks/use-profile';
+import { useProblemSubmissions } from '../hooks/use-problem-submissions';
 import { formatDateTime, formatExecutionTime } from '../utils/format';
 import type { Language, Verdict } from '../types';
 
 export function ProblemSubmissionsPage() {
   const { id = '' } = useParams();
-  const { user } = useAuth();
   const { data: problem, isLoading: problemLoading } = useProblem(id);
-  const { data: profile, isLoading: profileLoading } = useProfile(Boolean(user));
+  const { data: submissions, isLoading: submissionsLoading } = useProblemSubmissions(id, Boolean(id));
   const [languageFilter, setLanguageFilter] = useState<'all' | Language>('all');
   const [verdictFilter, setVerdictFilter] = useState<'all' | Verdict>('all');
 
   const filtered = useMemo(() => {
-    const submissions = profile?.submissions ?? [];
+    const subs = submissions ?? [];
 
-    return submissions.filter((submission) => {
-      const submissionProblemId = typeof submission.problemId === 'string' ? submission.problemId : submission.problemId._id;
-      const matchesProblem = submissionProblemId === id;
+    return subs.filter((submission) => {
       const matchesLanguage = languageFilter === 'all' || submission.language === languageFilter;
       const matchesVerdict = verdictFilter === 'all' || submission.verdict === verdictFilter;
-      return matchesProblem && matchesLanguage && matchesVerdict;
+      return matchesLanguage && matchesVerdict;
     });
-  }, [id, languageFilter, profile?.submissions, verdictFilter]);
+  }, [id, languageFilter, submissions, verdictFilter]);
 
-  if (problemLoading || profileLoading) {
+  if (problemLoading || submissionsLoading) {
     return (
       <div className="space-y-4">
         <Skeleton className="h-24 w-full rounded-3xl" />
@@ -49,7 +45,7 @@ export function ProblemSubmissionsPage() {
     <div className="space-y-6">
       <PageHeader
         title={`${problem.title} submissions`}
-        description="The current backend exposes authenticated-user submissions. This view filters them to the selected problem."
+        description="This view lists submissions for the selected problem (all users)."
       />
 
       <Card className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
@@ -71,7 +67,7 @@ export function ProblemSubmissionsPage() {
           <option value="Memory Limit Exceeded">Memory Limit Exceeded</option>
         </Select>
         <div className="flex items-center rounded-xl border border-white/10 px-4 py-3 text-sm text-slate-400 xl:col-span-1">
-          Showing {filtered.length} submission{filtered.length === 1 ? '' : 's'} for {user?.username || 'you'}
+          Showing {filtered.length} submission{filtered.length === 1 ? '' : 's'} for this problem
         </div>
       </Card>
 
@@ -93,7 +89,7 @@ export function ProblemSubmissionsPage() {
               <tbody className="divide-y divide-white/10">
                 {filtered.map((submission) => (
                   <tr key={submission._id} className="hover:bg-white/5">
-                    <td className="px-5 py-4 text-slate-100">{user?.username || 'You'}</td>
+                    <td className="px-5 py-4 text-slate-100">{typeof submission.userId === 'string' ? 'User' : submission.userId?.username || 'User'}</td>
                     <td className="px-5 py-4 text-slate-300">{submission.language}</td>
                     <td className="px-5 py-4">
                       <StatusPill verdict={submission.verdict} />

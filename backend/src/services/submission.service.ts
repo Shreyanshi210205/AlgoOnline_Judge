@@ -45,6 +45,19 @@ export const getUserSubmissions = async (
     });
 };
 
+export const getProblemSubmissions = async (
+  problemId: string
+) => {
+  return await Submission.find({
+    problemId,
+  })
+    .populate("userId", "username")
+    .populate("problemId", "title difficulty")
+    .sort({
+      createdAt: -1,
+    });
+};
+
 export const updateSubmissionVerdict = async (
   submissionId: string,
   verdict: string,

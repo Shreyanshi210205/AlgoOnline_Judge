@@ -21,6 +21,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<AuthUser | null>(getStoredUser());
   const [token, setToken] = useState<string | null>(getStoredToken());
   const [isHydrating, setIsHydrating] = useState(true);
+  const [hasHydrated, setHasHydrated] = useState(false);
 
   useEffect(() => {
     const handleLogout = () => {
@@ -34,14 +35,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('oj:logout', handleLogout);
   }, []);
 
+  // Hydrate on app mount only, not on every token change during login
   useEffect(() => {
     let isMounted = true;
 
     async function hydrate() {
-      if (!token) {
+      const storedToken = getStoredToken();
+      
+      if (!storedToken) {
         setIsHydrating(false);
+        setHasHydrated(true);
         return;
       }
+
+      // Token exists, set it in state for immediate use
+      setToken(storedToken);
 
       try {
         const profile = await getProfile();
@@ -51,30 +59,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(profile.user);
         setStoredUser(profile.user);
       } catch {
+        // If profile fetch fails, DON'T clear the token. User is still logged in.
+        // Just clear user data and continue.
         setUser(null);
-        setToken(null);
-        setStoredToken(null);
-        setStoredUser(null);
+        // eslint-disable-next-line no-console
+        console.debug('auth: profile hydration failed, but token preserved', {});
       } finally {
         if (isMounted) {
           setIsHydrating(false);
+          setHasHydrated(true);
         }
       }
     }
 
-    void hydrate();
+    // Only hydrate on app mount
+    if (!hasHydrated) {
+      void hydrate();
+    }
 
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, [hasHydrated]);
 
   const login = async (payload: LoginPayload) => {
     const response = await loginUser(payload);
-    setToken(response.token);
+    // Persist to storage immediately
     setStoredToken(response.token);
-    setUser(response.user);
     setStoredUser(response.user);
+    // Update state—this triggers redirect via isAuthenticated
+    setToken(response.token);
+    setUser(response.user);
     return response;
   };
 

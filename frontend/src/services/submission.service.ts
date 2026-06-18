@@ -16,6 +16,11 @@ export async function getUserSubmissions(userId: string) {
   return data.data;
 }
 
+export async function getProblemSubmissions(problemId: string) {
+  const { data } = await apiClient.get<{ data: Submission[]; count?: number }>(`/api/submissions/problem/${problemId}`);
+  return data.data;
+}
+
 export async function runCode(payload: {
   problemId: string;
   code: string;

@@ -5,5 +5,6 @@ export const queryKeys = {
   leaderboard: ['leaderboard'] as const,
   profile: ['profile'] as const,
   submission: (id: string) => ['submissions', id] as const,
+  problemSubmissions: (problemId: string) => ['problems', problemId, 'submissions'] as const,
   userSubmissions: (userId: string) => ['users', userId, 'submissions'] as const,
 };

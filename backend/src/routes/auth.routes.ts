@@ -4,7 +4,7 @@ import {
   loginUser
 } from "../controllers/auth.controller";
 import { authMiddleware } from "../middleware/auth.middleware";
-import { getProfile } from "../services/auth.service";
+import { getProfile } from "../controllers/auth.controller";
 
 const router = Router();
 

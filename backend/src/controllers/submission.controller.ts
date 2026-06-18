@@ -103,3 +103,32 @@ export const runSubmission =
       results,
     });
 };
+
+export const getProblemSubmissions = async (
+  req: Request,
+  res: Response
+) => {
+  try {
+    const { problemId } = req.params;
+
+    if (!problemId || Array.isArray(problemId)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid or missing problemId parameter',
+      });
+    }
+
+    const submissions = await submissionService.getProblemSubmissions(problemId);
+
+    res.status(200).json({
+      success: true,
+      count: submissions.length,
+      data: submissions,
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      message: error.message,
+    });
+  }
+};
